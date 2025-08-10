@@ -1,6 +1,6 @@
 # Knip report
 
-## Unused dependencies (5)
+## Unused dependencies (4)
 
 | Name                                | Location     | Severity |
 | :---------------------------------- | :----------- | :------- |
@@ -8,13 +8,13 @@
 | @stoplight/spectral-runtime         | package.json | error    |
 | @electric-sql/pglite                | package.json | error    |
 | is-glob                             | package.json | error    |
-| glob                                | package.json | error    |
 
-## Unused devDependencies (1)
+## Unused devDependencies (2)
 
 | Name           | Location     | Severity |
 | :------------- | :----------- | :------- |
 | @types/is-glob | package.json | error    |
+| typedoc        | package.json | error    |
 
 ## Referenced optional peerDependencies (1)
 

@@ -27,6 +27,8 @@ import { CreatedTemplateGlobal } from './globals';
 export * from '../tasks/alpha';
 export * from './filters';
 export * from './globals';
+export * from './types';
+export * from './checkpoints';
 
 /**
  * Extension point for managing scaffolder actions.
@@ -34,7 +36,7 @@ export * from './globals';
  * @alpha
  */
 export interface ScaffolderActionsExtensionPoint {
-  addActions(...actions: TemplateAction<any, any>[]): void;
+  addActions(...actions: TemplateAction<any, any, any>[]): void;
 }
 
 /**
@@ -73,7 +75,7 @@ export const scaffolderTaskBrokerExtensionPoint =
  */
 export interface ScaffolderTemplatingExtensionPoint {
   addTemplateFilters(
-    filters: Record<string, TemplateFilter> | CreatedTemplateFilter[],
+    filters: Record<string, TemplateFilter> | CreatedTemplateFilter<any, any>[],
   ): void;
 
   addTemplateGlobals(

@@ -15,10 +15,10 @@
  */
 
 import {
-  AnyExtensionDataRef,
   ApiHolder,
   ExtensionDataContainer,
   ExtensionDataRef,
+  ExtensionFactoryMiddleware,
   ExtensionInput,
   ResolvedExtensionInputs,
 } from '@backstage/frontend-plugin-api';
@@ -26,6 +26,7 @@ import mapValues from 'lodash/mapValues';
 import { AppNode, AppNodeInstance } from '@backstage/frontend-plugin-api';
 // eslint-disable-next-line @backstage/no-relative-monorepo-imports
 import { toInternalExtension } from '../../../frontend-plugin-api/src/wiring/resolveExtensionDefinition';
+import { createExtensionDataContainer } from '@internal/frontend';
 
 type Mutable<T> = {
   -readonly [P in keyof T]: T[P];
@@ -33,7 +34,7 @@ type Mutable<T> = {
 
 function resolveV1InputDataMap(
   dataMap: {
-    [name in string]: AnyExtensionDataRef;
+    [name in string]: ExtensionDataRef;
   },
   attachment: AppNode,
   inputName: string,
@@ -59,10 +60,10 @@ function resolveV1InputDataMap(
 }
 
 function resolveInputDataContainer(
-  extensionData: Array<AnyExtensionDataRef>,
+  extensionData: Array<ExtensionDataRef>,
   attachment: AppNode,
   inputName: string,
-): { node: AppNode } & ExtensionDataContainer<AnyExtensionDataRef> {
+): { node: AppNode } & ExtensionDataContainer<ExtensionDataRef> {
   const dataMap = new Map<string, unknown>();
 
   for (const ref of extensionData) {
@@ -103,7 +104,7 @@ function resolveInputDataContainer(
         };
       }
     },
-  } as { node: AppNode } & ExtensionDataContainer<AnyExtensionDataRef>;
+  } as { node: AppNode } & ExtensionDataContainer<ExtensionDataRef>;
 }
 
 function reportUndeclaredAttachments(
@@ -139,7 +140,7 @@ function resolveV1Inputs(
     [inputName in string]: {
       $$type: '@backstage/ExtensionInput';
       extensionData: {
-        [name in string]: AnyExtensionDataRef;
+        [name in string]: ExtensionDataRef;
       };
       config: { optional: boolean; singleton: boolean };
     };
@@ -192,14 +193,14 @@ function resolveV1Inputs(
 function resolveV2Inputs(
   inputMap: {
     [inputName in string]: ExtensionInput<
-      AnyExtensionDataRef,
+      ExtensionDataRef,
       { optional: boolean; singleton: boolean }
     >;
   },
   attachments: ReadonlyMap<string, AppNode[]>,
 ): ResolvedExtensionInputs<{
   [inputName in string]: ExtensionInput<
-    AnyExtensionDataRef,
+    ExtensionDataRef,
     { optional: boolean; singleton: boolean }
   >;
 }> {
@@ -234,7 +235,7 @@ function resolveV2Inputs(
     );
   }) as ResolvedExtensionInputs<{
     [inputName in string]: ExtensionInput<
-      AnyExtensionDataRef,
+      ExtensionDataRef,
       { optional: boolean; singleton: boolean }
     >;
   }>;
@@ -242,6 +243,7 @@ function resolveV2Inputs(
 
 /** @internal */
 export function createAppNodeInstance(options: {
+  extensionFactoryMiddleware?: ExtensionFactoryMiddleware;
   node: AppNode;
   apis: ApiHolder;
   attachments: ReadonlyMap<string, AppNode[]>;
@@ -251,9 +253,11 @@ export function createAppNodeInstance(options: {
   const extensionData = new Map<string, unknown>();
   const extensionDataRefs = new Set<ExtensionDataRef<unknown>>();
 
-  let parsedConfig: unknown;
+  let parsedConfig: { [x: string]: any };
   try {
-    parsedConfig = extension.configSchema?.parse(config ?? {});
+    parsedConfig = extension.configSchema?.parse(config ?? {}) as {
+      [x: string]: any;
+    };
   } catch (e) {
     throw new Error(
       `Invalid configuration for extension '${id}'; caused by ${e}`,
@@ -289,12 +293,35 @@ export function createAppNodeInstance(options: {
         extensionDataRefs.add(ref);
       }
     } else if (internalExtension.version === 'v2') {
-      const outputDataValues = internalExtension.factory({
+      const context = {
         node,
         apis,
         config: parsedConfig,
         inputs: resolveV2Inputs(internalExtension.inputs, attachments),
-      });
+      };
+      const outputDataValues = options.extensionFactoryMiddleware
+        ? createExtensionDataContainer(
+            options.extensionFactoryMiddleware(overrideContext => {
+              return createExtensionDataContainer(
+                internalExtension.factory({
+                  node: context.node,
+                  apis: context.apis,
+                  inputs: context.inputs,
+                  config: overrideContext?.config ?? context.config,
+                }),
+                'extension factory',
+              );
+            }, context),
+            'extension factory middleware',
+          )
+        : internalExtension.factory(context);
+
+      if (
+        typeof outputDataValues !== 'object' ||
+        !outputDataValues?.[Symbol.iterator]
+      ) {
+        throw new Error('extension factory did not provide an iterable object');
+      }
 
       const outputDataMap = new Map<string, unknown>();
       for (const value of outputDataValues) {
@@ -356,6 +383,7 @@ export function createAppNodeInstance(options: {
 export function instantiateAppNodeTree(
   rootNode: AppNode,
   apis: ApiHolder,
+  extensionFactoryMiddleware?: ExtensionFactoryMiddleware,
 ): void {
   function createInstance(node: AppNode): AppNodeInstance | undefined {
     if (node.instance) {
@@ -381,6 +409,7 @@ export function instantiateAppNodeTree(
     }
 
     (node as Mutable<AppNode>).instance = createAppNodeInstance({
+      extensionFactoryMiddleware,
       node,
       apis,
       attachments: instantiatedAttachments,

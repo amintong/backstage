@@ -27,11 +27,7 @@ import {
   KubernetesRequestAuth,
 } from '@backstage/plugin-kubernetes-common';
 import { AuthorizeResult } from '@backstage/plugin-permission-common';
-import {
-  bufferFromFileOrString,
-  Cluster,
-  KubeConfig,
-} from '@kubernetes/client-node';
+import type { Cluster } from '@kubernetes/client-node';
 import { createProxyMiddleware, RequestHandler } from 'http-proxy-middleware';
 import fs from 'fs-extra';
 
@@ -46,10 +42,7 @@ import {
   LoggerService,
   PermissionsService,
 } from '@backstage/backend-plugin-api';
-import {
-  createLegacyAuthAdapters,
-  loggerToWinstonLogger,
-} from '@backstage/backend-common';
+import { createLegacyAuthAdapters } from '@backstage/backend-common';
 
 export const APPLICATION_JSON: string = 'application/json';
 
@@ -157,8 +150,13 @@ export class KubernetesProxy {
     if (!middleware) {
       const logger = this.logger.child({ cluster: originalCluster.name });
       middleware = createProxyMiddleware({
-        // TODO: Add 'log' to LoggerService
-        logProvider: () => loggerToWinstonLogger(logger),
+        logProvider: () => ({
+          log: logger.info.bind(logger),
+          debug: logger.debug.bind(logger),
+          info: logger.info.bind(logger),
+          warn: logger.warn.bind(logger),
+          error: logger.error.bind(logger),
+        }),
         ws: true,
         secure: !originalCluster.skipTLSVerify,
         changeOrigin: true,
@@ -175,6 +173,10 @@ export class KubernetesProxy {
           // Re-evaluate the cluster on each request, in case it has changed
           const cluster = await this.getClusterForRequest(req);
           const url = new URL(cluster.url);
+
+          const { bufferFromFileOrString } = await import(
+            '@kubernetes/client-node'
+          );
 
           const target: any = {
             protocol: url.protocol,
@@ -234,6 +236,8 @@ export class KubernetesProxy {
   }
 
   private async getClusterForRequest(req: Request): Promise<ClusterDetails> {
+    const { KubeConfig } = await import('@kubernetes/client-node');
+
     const clusterName = req.headers[HEADER_KUBERNETES_CLUSTER.toLowerCase()];
     const clusters = await this.clusterSupplier.getClusters({
       credentials: await this.httpAuth.credentials(req),

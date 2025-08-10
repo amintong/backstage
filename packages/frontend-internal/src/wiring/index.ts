@@ -14,5 +14,7 @@
  * limitations under the License.
  */
 
+export { createExtensionDataContainer } from './createExtensionDataContainer';
+export { OpaqueSwappableComponentRef } from './InternalSwappableComponentRef';
 export { OpaqueExtensionDefinition } from './InternalExtensionDefinition';
 export { OpaqueFrontendPlugin } from './InternalFrontendPlugin';

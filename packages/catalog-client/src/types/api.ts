@@ -16,6 +16,10 @@
 
 import { CompoundEntityRef, Entity } from '@backstage/catalog-model';
 import { SerializedError } from '@backstage/errors';
+import type {
+  AnalyzeLocationRequest,
+  AnalyzeLocationResponse,
+} from '@backstage/plugin-catalog-common';
 
 /**
  * This symbol can be used in place of a value when passed to filters in e.g.
@@ -350,6 +354,15 @@ export type Location = {
 };
 
 /**
+ * The response type for {@link CatalogClient.getLocations}
+ *
+ * @public
+ */
+export interface GetLocationsResponse {
+  items: Location[];
+}
+
+/**
  * The request type for {@link CatalogClient.addLocation}.
  *
  * @public
@@ -591,6 +604,17 @@ export interface CatalogApi {
   // Locations
 
   /**
+   * List locations
+   *
+   * @param request - Request parameters
+   * @param options - Additional options
+   */
+  getLocations(
+    request?: {},
+    options?: CatalogRequestOptions,
+  ): Promise<GetLocationsResponse>;
+
+  /**
    * Gets a registered location by its ID.
    *
    * @param id - A location ID
@@ -657,4 +681,15 @@ export interface CatalogApi {
     locationRef: string,
     options?: CatalogRequestOptions,
   ): Promise<ValidateEntityResponse>;
+
+  /**
+   * Validate a given location.
+   *
+   * @param location - Request parameters
+   * @param options - Additional options
+   */
+  analyzeLocation(
+    location: AnalyzeLocationRequest,
+    options?: CatalogRequestOptions,
+  ): Promise<AnalyzeLocationResponse>;
 }

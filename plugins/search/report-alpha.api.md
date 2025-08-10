@@ -5,16 +5,20 @@
 ```ts
 import { AnyApiFactory } from '@backstage/core-plugin-api';
 import { AnyRouteRefParams } from '@backstage/frontend-plugin-api';
+import { ApiFactory } from '@backstage/core-plugin-api';
 import { ConfigurableExtensionDataRef } from '@backstage/frontend-plugin-api';
+import { ExtensionBlueprintParams } from '@backstage/frontend-plugin-api';
+import { ExtensionDataRef } from '@backstage/frontend-plugin-api';
 import { ExtensionDefinition } from '@backstage/frontend-plugin-api';
 import { ExtensionInput } from '@backstage/frontend-plugin-api';
 import { FrontendPlugin } from '@backstage/frontend-plugin-api';
 import { IconComponent } from '@backstage/core-plugin-api';
-import { default as React_2 } from 'react';
+import { JSX as JSX_2 } from 'react';
 import { RouteRef } from '@backstage/frontend-plugin-api';
 import { SearchFilterExtensionComponent } from '@backstage/plugin-search-react/alpha';
 import { SearchResultItemExtensionComponent } from '@backstage/plugin-search-react/alpha';
 import { SearchResultItemExtensionPredicate } from '@backstage/plugin-search-react/alpha';
+import { TranslationRef } from '@backstage/core-plugin-api/alpha';
 
 // @alpha (undocumented)
 const _default: FrontendPlugin<
@@ -23,12 +27,27 @@ const _default: FrontendPlugin<
   },
   {},
   {
+    'api:search': ExtensionDefinition<{
+      kind: 'api';
+      name: undefined;
+      config: {};
+      configInput: {};
+      output: ExtensionDataRef<AnyApiFactory, 'core.api.factory', {}>;
+      inputs: {};
+      params: <
+        TApi,
+        TImpl extends TApi,
+        TDeps extends { [name in string]: unknown },
+      >(
+        params: ApiFactory<TApi, TImpl, TDeps>,
+      ) => ExtensionBlueprintParams<AnyApiFactory>;
+    }>;
     'nav-item:search': ExtensionDefinition<{
       kind: 'nav-item';
       name: undefined;
       config: {};
       configInput: {};
-      output: ConfigurableExtensionDataRef<
+      output: ExtensionDataRef<
         {
           title: string;
           icon: IconComponent;
@@ -44,21 +63,6 @@ const _default: FrontendPlugin<
         routeRef: RouteRef<undefined>;
       };
     }>;
-    'api:search': ExtensionDefinition<{
-      kind: 'api';
-      name: undefined;
-      config: {};
-      configInput: {};
-      output: ConfigurableExtensionDataRef<
-        AnyApiFactory,
-        'core.api.factory',
-        {}
-      >;
-      inputs: {};
-      params: {
-        factory: AnyApiFactory;
-      };
-    }>;
     'page:search': ExtensionDefinition<{
       config: {
         noTrack: boolean;
@@ -71,13 +75,9 @@ const _default: FrontendPlugin<
         path?: string | undefined;
       };
       output:
-        | ConfigurableExtensionDataRef<
-            React_2.JSX.Element,
-            'core.reactElement',
-            {}
-          >
-        | ConfigurableExtensionDataRef<string, 'core.routing.path', {}>
-        | ConfigurableExtensionDataRef<
+        | ExtensionDataRef<string, 'core.routing.path', {}>
+        | ExtensionDataRef<JSX_2.Element, 'core.reactElement', {}>
+        | ExtensionDataRef<
             RouteRef<AnyRouteRefParams>,
             'core.routing.ref',
             {
@@ -88,7 +88,7 @@ const _default: FrontendPlugin<
         items: ExtensionInput<
           ConfigurableExtensionDataRef<
             {
-              predicate?: SearchResultItemExtensionPredicate | undefined;
+              predicate?: SearchResultItemExtensionPredicate;
               component: SearchResultItemExtensionComponent;
             },
             'search.search-result-list-item.item',
@@ -131,9 +131,10 @@ const _default: FrontendPlugin<
       kind: 'page';
       name: undefined;
       params: {
-        defaultPath: string;
+        defaultPath?: [Error: `Use the 'path' param instead`];
+        path: string;
         loader: () => Promise<JSX.Element>;
-        routeRef?: RouteRef<AnyRouteRefParams> | undefined;
+        routeRef?: RouteRef;
       };
     }>;
   }
@@ -146,11 +147,15 @@ export const searchApi: ExtensionDefinition<{
   name: undefined;
   config: {};
   configInput: {};
-  output: ConfigurableExtensionDataRef<AnyApiFactory, 'core.api.factory', {}>;
+  output: ExtensionDataRef<AnyApiFactory, 'core.api.factory', {}>;
   inputs: {};
-  params: {
-    factory: AnyApiFactory;
-  };
+  params: <
+    TApi,
+    TImpl extends TApi,
+    TDeps extends { [name in string]: unknown },
+  >(
+    params: ApiFactory<TApi, TImpl, TDeps>,
+  ) => ExtensionBlueprintParams<AnyApiFactory>;
 }>;
 
 // @alpha (undocumented)
@@ -159,7 +164,7 @@ export const searchNavItem: ExtensionDefinition<{
   name: undefined;
   config: {};
   configInput: {};
-  output: ConfigurableExtensionDataRef<
+  output: ExtensionDataRef<
     {
       title: string;
       icon: IconComponent;
@@ -189,9 +194,9 @@ export const searchPage: ExtensionDefinition<{
     path?: string | undefined;
   };
   output:
-    | ConfigurableExtensionDataRef<React_2.JSX.Element, 'core.reactElement', {}>
-    | ConfigurableExtensionDataRef<string, 'core.routing.path', {}>
-    | ConfigurableExtensionDataRef<
+    | ExtensionDataRef<string, 'core.routing.path', {}>
+    | ExtensionDataRef<JSX_2.Element, 'core.reactElement', {}>
+    | ExtensionDataRef<
         RouteRef<AnyRouteRefParams>,
         'core.routing.ref',
         {
@@ -202,7 +207,7 @@ export const searchPage: ExtensionDefinition<{
     items: ExtensionInput<
       ConfigurableExtensionDataRef<
         {
-          predicate?: SearchResultItemExtensionPredicate | undefined;
+          predicate?: SearchResultItemExtensionPredicate;
           component: SearchResultItemExtensionComponent;
         },
         'search.search-result-list-item.item',
@@ -245,11 +250,26 @@ export const searchPage: ExtensionDefinition<{
   kind: 'page';
   name: undefined;
   params: {
-    defaultPath: string;
+    defaultPath?: [Error: `Use the 'path' param instead`];
+    path: string;
     loader: () => Promise<JSX.Element>;
-    routeRef?: RouteRef<AnyRouteRefParams> | undefined;
+    routeRef?: RouteRef;
   };
 }>;
+
+// @alpha (undocumented)
+export const searchTranslationRef: TranslationRef<
+  'search',
+  {
+    readonly 'searchModal.viewFullResults': 'View Full Results';
+    readonly 'searchType.tabs.allTitle': 'All';
+    readonly 'searchType.allResults': 'All Results';
+    readonly 'searchType.accordion.collapse': 'Collapse';
+    readonly 'searchType.accordion.allTitle': 'All';
+    readonly 'searchType.accordion.numberOfResults': '{{number}} results';
+    readonly 'sidebarSearchModal.title': 'Search';
+  }
+>;
 
 // (No @packageDocumentation comment for this package)
 ```

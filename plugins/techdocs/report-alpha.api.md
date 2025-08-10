@@ -4,15 +4,20 @@
 
 ```ts
 import { AnyApiFactory } from '@backstage/frontend-plugin-api';
-import { AnyExtensionDataRef } from '@backstage/frontend-plugin-api';
 import { AnyRouteRefParams } from '@backstage/frontend-plugin-api';
+import { ApiFactory } from '@backstage/frontend-plugin-api';
 import { ConfigurableExtensionDataRef } from '@backstage/frontend-plugin-api';
+import { defaultEntityContentGroups } from '@backstage/plugin-catalog-react/alpha';
 import { Entity } from '@backstage/catalog-model';
+import { EntityPredicate } from '@backstage/plugin-catalog-react/alpha';
+import { ExtensionBlueprintParams } from '@backstage/frontend-plugin-api';
+import { ExtensionDataRef } from '@backstage/frontend-plugin-api';
 import { ExtensionDefinition } from '@backstage/frontend-plugin-api';
 import { ExtensionInput } from '@backstage/frontend-plugin-api';
 import { FrontendPlugin } from '@backstage/frontend-plugin-api';
 import { IconComponent } from '@backstage/core-plugin-api';
-import { default as React_2 } from 'react';
+import { IconLinkVerticalProps } from '@backstage/core-components';
+import { JSX as JSX_2 } from 'react';
 import { RouteRef } from '@backstage/frontend-plugin-api';
 import { SearchResultItemExtensionComponent } from '@backstage/plugin-search-react/alpha';
 import { SearchResultItemExtensionPredicate } from '@backstage/plugin-search-react/alpha';
@@ -32,12 +37,189 @@ const _default: FrontendPlugin<
   },
   {},
   {
+    'api:techdocs': ExtensionDefinition<{
+      kind: 'api';
+      name: undefined;
+      config: {};
+      configInput: {};
+      output: ExtensionDataRef<AnyApiFactory, 'core.api.factory', {}>;
+      inputs: {};
+      params: <
+        TApi,
+        TImpl extends TApi,
+        TDeps extends { [name in string]: unknown },
+      >(
+        params: ApiFactory<TApi, TImpl, TDeps>,
+      ) => ExtensionBlueprintParams<AnyApiFactory>;
+    }>;
+    'api:techdocs/storage': ExtensionDefinition<{
+      kind: 'api';
+      name: 'storage';
+      config: {};
+      configInput: {};
+      output: ExtensionDataRef<AnyApiFactory, 'core.api.factory', {}>;
+      inputs: {};
+      params: <
+        TApi,
+        TImpl extends TApi,
+        TDeps extends { [name in string]: unknown },
+      >(
+        params: ApiFactory<TApi, TImpl, TDeps>,
+      ) => ExtensionBlueprintParams<AnyApiFactory>;
+    }>;
+    'empty-state:techdocs/entity-content': ExtensionDefinition<{
+      config: {};
+      configInput: {};
+      output: ExtensionDataRef<
+        JSX_2.Element,
+        'core.reactElement',
+        {
+          optional: true;
+        }
+      >;
+      inputs: {
+        [x: string]: ExtensionInput<
+          ExtensionDataRef,
+          {
+            optional: boolean;
+            singleton: boolean;
+          }
+        >;
+      };
+      params: never;
+      kind: 'empty-state';
+      name: 'entity-content';
+    }>;
+    'entity-content:techdocs': ExtensionDefinition<{
+      config: {
+        path: string | undefined;
+        title: string | undefined;
+        filter: EntityPredicate | undefined;
+        group: string | false | undefined;
+      };
+      configInput: {
+        filter?: EntityPredicate | undefined;
+        title?: string | undefined;
+        path?: string | undefined;
+        group?: string | false | undefined;
+      };
+      output:
+        | ExtensionDataRef<string, 'core.routing.path', {}>
+        | ExtensionDataRef<JSX_2.Element, 'core.reactElement', {}>
+        | ExtensionDataRef<
+            RouteRef<AnyRouteRefParams>,
+            'core.routing.ref',
+            {
+              optional: true;
+            }
+          >
+        | ExtensionDataRef<
+            (entity: Entity) => boolean,
+            'catalog.entity-filter-function',
+            {
+              optional: true;
+            }
+          >
+        | ExtensionDataRef<
+            string,
+            'catalog.entity-filter-expression',
+            {
+              optional: true;
+            }
+          >
+        | ExtensionDataRef<string, 'catalog.entity-content-title', {}>
+        | ExtensionDataRef<
+            string,
+            'catalog.entity-content-group',
+            {
+              optional: true;
+            }
+          >;
+      inputs: {
+        addons: ExtensionInput<
+          ConfigurableExtensionDataRef<
+            TechDocsAddonOptions,
+            'techdocs.addon',
+            {}
+          >,
+          {
+            singleton: false;
+            optional: false;
+          }
+        >;
+        emptyState: ExtensionInput<
+          ConfigurableExtensionDataRef<
+            JSX_2.Element,
+            'core.reactElement',
+            {
+              optional: true;
+            }
+          >,
+          {
+            singleton: true;
+            optional: true;
+          }
+        >;
+      };
+      kind: 'entity-content';
+      name: undefined;
+      params: {
+        defaultPath?: [Error: `Use the 'path' param instead`];
+        path: string;
+        defaultTitle?: [Error: `Use the 'title' param instead`];
+        title: string;
+        defaultGroup?: [Error: `Use the 'group' param instead`];
+        group?: keyof defaultEntityContentGroups | (string & {});
+        loader: () => Promise<JSX.Element>;
+        routeRef?: RouteRef;
+        filter?: string | EntityPredicate | ((entity: Entity) => boolean);
+      };
+    }>;
+    'entity-icon-link:techdocs/read-docs': ExtensionDefinition<{
+      kind: 'entity-icon-link';
+      name: 'read-docs';
+      config: {
+        label: string | undefined;
+        title: string | undefined;
+        filter: EntityPredicate | undefined;
+      };
+      configInput: {
+        filter?: EntityPredicate | undefined;
+        label?: string | undefined;
+        title?: string | undefined;
+      };
+      output:
+        | ExtensionDataRef<
+            (entity: Entity) => boolean,
+            'catalog.entity-filter-function',
+            {
+              optional: true;
+            }
+          >
+        | ExtensionDataRef<
+            string,
+            'catalog.entity-filter-expression',
+            {
+              optional: true;
+            }
+          >
+        | ExtensionDataRef<
+            () => IconLinkVerticalProps,
+            'entity-icon-link-props',
+            {}
+          >;
+      inputs: {};
+      params: {
+        useProps: () => Omit<IconLinkVerticalProps, 'color'>;
+        filter?: EntityPredicate | ((entity: Entity) => boolean);
+      };
+    }>;
     'nav-item:techdocs': ExtensionDefinition<{
       kind: 'nav-item';
       name: undefined;
       config: {};
       configInput: {};
-      output: ConfigurableExtensionDataRef<
+      output: ExtensionDataRef<
         {
           title: string;
           icon: IconComponent;
@@ -53,36 +235,6 @@ const _default: FrontendPlugin<
         routeRef: RouteRef<undefined>;
       };
     }>;
-    'api:techdocs': ExtensionDefinition<{
-      kind: 'api';
-      name: undefined;
-      config: {};
-      configInput: {};
-      output: ConfigurableExtensionDataRef<
-        AnyApiFactory,
-        'core.api.factory',
-        {}
-      >;
-      inputs: {};
-      params: {
-        factory: AnyApiFactory;
-      };
-    }>;
-    'api:techdocs/storage': ExtensionDefinition<{
-      kind: 'api';
-      name: 'storage';
-      config: {};
-      configInput: {};
-      output: ConfigurableExtensionDataRef<
-        AnyApiFactory,
-        'core.api.factory',
-        {}
-      >;
-      inputs: {};
-      params: {
-        factory: AnyApiFactory;
-      };
-    }>;
     'page:techdocs': ExtensionDefinition<{
       kind: 'page';
       name: undefined;
@@ -93,13 +245,9 @@ const _default: FrontendPlugin<
         path?: string | undefined;
       };
       output:
-        | ConfigurableExtensionDataRef<
-            React_2.JSX.Element,
-            'core.reactElement',
-            {}
-          >
-        | ConfigurableExtensionDataRef<string, 'core.routing.path', {}>
-        | ConfigurableExtensionDataRef<
+        | ExtensionDataRef<string, 'core.routing.path', {}>
+        | ExtensionDataRef<JSX_2.Element, 'core.reactElement', {}>
+        | ExtensionDataRef<
             RouteRef<AnyRouteRefParams>,
             'core.routing.ref',
             {
@@ -108,48 +256,11 @@ const _default: FrontendPlugin<
           >;
       inputs: {};
       params: {
-        defaultPath: string;
+        defaultPath?: [Error: `Use the 'path' param instead`];
+        path: string;
         loader: () => Promise<JSX.Element>;
-        routeRef?: RouteRef<AnyRouteRefParams> | undefined;
+        routeRef?: RouteRef;
       };
-    }>;
-    'search-result-list-item:techdocs': ExtensionDefinition<{
-      config: {
-        title: string | undefined;
-        lineClamp: number;
-        asLink: boolean;
-        asListItem: boolean;
-      } & {
-        noTrack: boolean;
-      };
-      configInput: {
-        title?: string | undefined;
-        lineClamp?: number | undefined;
-        asListItem?: boolean | undefined;
-        asLink?: boolean | undefined;
-      } & {
-        noTrack?: boolean | undefined;
-      };
-      output: ConfigurableExtensionDataRef<
-        {
-          predicate?: SearchResultItemExtensionPredicate | undefined;
-          component: SearchResultItemExtensionComponent;
-        },
-        'search.search-result-list-item.item',
-        {}
-      >;
-      inputs: {
-        [x: string]: ExtensionInput<
-          AnyExtensionDataRef,
-          {
-            optional: boolean;
-            singleton: boolean;
-          }
-        >;
-      };
-      kind: 'search-result-list-item';
-      name: undefined;
-      params: SearchResultListItemBlueprintParams;
     }>;
     'page:techdocs/reader': ExtensionDefinition<{
       config: {
@@ -159,13 +270,9 @@ const _default: FrontendPlugin<
         path?: string | undefined;
       };
       output:
-        | ConfigurableExtensionDataRef<
-            React_2.JSX.Element,
-            'core.reactElement',
-            {}
-          >
-        | ConfigurableExtensionDataRef<string, 'core.routing.path', {}>
-        | ConfigurableExtensionDataRef<
+        | ExtensionDataRef<string, 'core.routing.path', {}>
+        | ExtensionDataRef<JSX_2.Element, 'core.reactElement', {}>
+        | ExtensionDataRef<
             RouteRef<AnyRouteRefParams>,
             'core.routing.ref',
             {
@@ -188,129 +295,49 @@ const _default: FrontendPlugin<
       kind: 'page';
       name: 'reader';
       params: {
-        defaultPath: string;
+        defaultPath?: [Error: `Use the 'path' param instead`];
+        path: string;
         loader: () => Promise<JSX.Element>;
-        routeRef?: RouteRef<AnyRouteRefParams> | undefined;
+        routeRef?: RouteRef;
       };
     }>;
-    'entity-content:techdocs': ExtensionDefinition<{
+    'search-result-list-item:techdocs': ExtensionDefinition<{
       config: {
-        path: string | undefined;
         title: string | undefined;
-        filter: string | undefined;
-        group: string | false | undefined;
+        lineClamp: number;
+        asLink: boolean;
+        asListItem: boolean;
+      } & {
+        noTrack: boolean;
       };
       configInput: {
-        filter?: string | undefined;
         title?: string | undefined;
-        path?: string | undefined;
-        group?: string | false | undefined;
+        lineClamp?: number | undefined;
+        asListItem?: boolean | undefined;
+        asLink?: boolean | undefined;
+      } & {
+        noTrack?: boolean | undefined;
       };
-      output:
-        | ConfigurableExtensionDataRef<
-            React_2.JSX.Element,
-            'core.reactElement',
-            {}
-          >
-        | ConfigurableExtensionDataRef<string, 'core.routing.path', {}>
-        | ConfigurableExtensionDataRef<
-            RouteRef<AnyRouteRefParams>,
-            'core.routing.ref',
-            {
-              optional: true;
-            }
-          >
-        | ConfigurableExtensionDataRef<
-            string,
-            'catalog.entity-content-title',
-            {}
-          >
-        | ConfigurableExtensionDataRef<
-            (entity: Entity) => boolean,
-            'catalog.entity-filter-function',
-            {
-              optional: true;
-            }
-          >
-        | ConfigurableExtensionDataRef<
-            string,
-            'catalog.entity-filter-expression',
-            {
-              optional: true;
-            }
-          >
-        | ConfigurableExtensionDataRef<
-            string,
-            'catalog.entity-content-group',
-            {
-              optional: true;
-            }
-          >;
-      inputs: {
-        addons: ExtensionInput<
-          ConfigurableExtensionDataRef<
-            TechDocsAddonOptions,
-            'techdocs.addon',
-            {}
-          >,
-          {
-            singleton: false;
-            optional: false;
-          }
-        >;
-        emptyState: ExtensionInput<
-          ConfigurableExtensionDataRef<
-            React_2.JSX.Element,
-            'core.reactElement',
-            {
-              optional: true;
-            }
-          >,
-          {
-            singleton: true;
-            optional: true;
-          }
-        >;
-      };
-      kind: 'entity-content';
-      name: undefined;
-      params: {
-        loader: () => Promise<JSX.Element>;
-        defaultPath: string;
-        defaultTitle: string;
-        defaultGroup?:
-          | (string & {})
-          | 'documentation'
-          | 'development'
-          | 'deployment'
-          | 'observability'
-          | undefined;
-        routeRef?: RouteRef<AnyRouteRefParams> | undefined;
-        filter?: string | ((entity: Entity) => boolean) | undefined;
-      };
-    }>;
-    'empty-state:techdocs/entity-content': ExtensionDefinition<{
-      config: {};
-      configInput: {};
-      output: ConfigurableExtensionDataRef<
-        React_2.JSX.Element,
-        'core.reactElement',
+      output: ExtensionDataRef<
         {
-          optional: true;
-        }
+          predicate?: SearchResultItemExtensionPredicate;
+          component: SearchResultItemExtensionComponent;
+        },
+        'search.search-result-list-item.item',
+        {}
       >;
       inputs: {
         [x: string]: ExtensionInput<
-          AnyExtensionDataRef,
+          ExtensionDataRef,
           {
             optional: boolean;
             singleton: boolean;
           }
         >;
       };
-      params: never;
-      kind: 'empty-state';
-      name: 'entity-content';
+      kind: 'search-result-list-item';
+      name: undefined;
+      params: SearchResultListItemBlueprintParams;
     }>;
   }
 >;
@@ -334,9 +361,9 @@ export const techDocsSearchResultListItemExtension: ExtensionDefinition<{
   } & {
     noTrack?: boolean | undefined;
   };
-  output: ConfigurableExtensionDataRef<
+  output: ExtensionDataRef<
     {
-      predicate?: SearchResultItemExtensionPredicate | undefined;
+      predicate?: SearchResultItemExtensionPredicate;
       component: SearchResultItemExtensionComponent;
     },
     'search.search-result-list-item.item',
@@ -344,7 +371,7 @@ export const techDocsSearchResultListItemExtension: ExtensionDefinition<{
   >;
   inputs: {
     [x: string]: ExtensionInput<
-      AnyExtensionDataRef,
+      ExtensionDataRef,
       {
         optional: boolean;
         singleton: boolean;

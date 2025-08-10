@@ -14,12 +14,9 @@
  * limitations under the License.
  */
 
-import React from 'react';
+import { Fragment } from 'react';
 import { Link, MemoryRouter } from 'react-router-dom';
-import {
-  createSpecializedApp,
-  FrontendFeature,
-} from '@backstage/frontend-app-api';
+import { createSpecializedApp } from '@backstage/frontend-app-api';
 import { RenderResult, render } from '@testing-library/react';
 import { ConfigReader } from '@backstage/config';
 import { JsonObject } from '@backstage/types';
@@ -33,8 +30,14 @@ import {
   RouterBlueprint,
   NavItemBlueprint,
   createFrontendPlugin,
+  FrontendFeature,
 } from '@backstage/frontend-plugin-api';
 import appPlugin from '@backstage/plugin-app';
+
+const DEFAULT_MOCK_CONFIG = {
+  app: { baseUrl: 'http://localhost:3000' },
+  backend: { baseUrl: 'http://localhost:7007' },
+};
 
 /**
  * Options to customize the behavior of the test app.
@@ -73,6 +76,11 @@ export type TestAppOptions = {
    * Additional features to add to the test app.
    */
   features?: FrontendFeature[];
+
+  /**
+   * Initial route entries to use for the router.
+   */
+  initialRouteEntries?: string[];
 };
 
 const NavItem = (props: {
@@ -150,7 +158,11 @@ export function renderInTestApp(
     }),
     RouterBlueprint.make({
       params: {
-        Component: ({ children }) => <MemoryRouter>{children}</MemoryRouter>,
+        component: ({ children }) => (
+          <MemoryRouter initialEntries={options?.initialRouteEntries}>
+            {children}
+          </MemoryRouter>
+        ),
       },
     }),
   ];
@@ -169,7 +181,7 @@ export function renderInTestApp(
             coreExtensionData.routeRef,
           ],
           factory: () => [
-            coreExtensionData.reactElement(<React.Fragment />),
+            coreExtensionData.reactElement(<Fragment />),
             coreExtensionData.routePath(path),
             coreExtensionData.routeRef(routeRef),
           ],
@@ -184,7 +196,7 @@ export function renderInTestApp(
 
   const features: FrontendFeature[] = [
     createFrontendPlugin({
-      id: 'test',
+      pluginId: 'test',
       extensions,
     }),
     appPluginOverride,
@@ -197,9 +209,14 @@ export function renderInTestApp(
   const app = createSpecializedApp({
     features,
     config: ConfigReader.fromConfigs([
-      { context: 'render-config', data: options?.config ?? {} },
+      {
+        context: 'render-config',
+        data: options?.config ?? DEFAULT_MOCK_CONFIG,
+      },
     ]),
   });
 
-  return render(app.createRoot());
+  return render(
+    app.tree.root.instance!.getData(coreExtensionData.reactElement),
+  );
 }

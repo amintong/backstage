@@ -1,6 +1,5 @@
 app:
-  experimental:
-    packages: 'all' # ✨
+  packages: 'all' # ✨
 
   routes:
     bindings:
@@ -8,19 +7,45 @@ app:
       catalog.createComponent: catalog-import.importPage
       org.catalogIndex: catalog.catalogIndex
 
+  pluginOverrides:
+    - match:
+        pluginId: pages
+      info:
+        description: 'This description was overridden in packages/app-next/app-config.yaml'
+    - match:
+        pluginId: /^catalog(-.*)?$/
+      info:
+        ownerEntityRefs: [cubic-belugas]
+    - match:
+        packageName: '@backstage/plugin-scaffolder'
+      info:
+        ownerEntityRefs: [cubic-belugas]
+
   extensions:
     # - apis.plugin.graphiql.browse.gitlab: true
     # - graphiql-endpoint:graphiql/gitlab: true
+
+    - nav-item:search: false
+    - nav-item:user-settings: false
+    - nav-item:catalog
+    - nav-item:api-docs
+    - nav-item:scaffolder
+    - nav-item:app-visualizer
 
     # Pages
     - page:catalog/entity:
         config:
           groups:
+            # placing a tab at the beginning
+            - overview:
+                title: Overview
             # example disabling a default group
-            - development: false
+            # - development: false
             # example overriding a default group title
             - documentation:
                 title: Docs
+            - deployment:
+                title: Deployments
             # example adding a new group
             - custom:
                 title: Custom
@@ -32,7 +57,11 @@ app:
     - entity-card:catalog/labels
     - entity-card:catalog/links:
         config:
-          filter: kind:component has:links
+          filter:
+            kind: component
+            metadata.links:
+              $exists: true
+          # filter: kind:component has:links
           type: info
     # - entity-card:linguist/languages
     - entity-card:catalog-graph/relations:
@@ -47,14 +76,16 @@ app:
     - entity-card:org/group-profile
     - entity-card:org/members-list
     - entity-card:org/ownership
-    - entity-card:org/user-profile
+    - entity-card:org/user-profile:
+        config:
+          maxRelations: 5
+          hideIcons: true
     # - entity-card:azure-devops/readme
 
     # Entity page contents
     - entity-content:catalog/overview:
         config:
-          # associating with a custom group
-          group: custom
+          group: overview
     - entity-content:api-docs/definition
     - entity-content:api-docs/apis:
         config:
@@ -70,11 +101,6 @@ app:
     # - entity-content:azure-devops/pipelines
     # - entity-content:azure-devops/pull-requests
     # - entity-content:azure-devops/git-tags
-
-    - entity-content-layout:app/sticky:
-        config:
-          # this layout will apply to entities of kind component
-          filter: 'kind:component'
 
   # scmAuthExtension: >-
   #   createScmAuthExtension({

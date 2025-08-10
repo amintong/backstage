@@ -36,6 +36,7 @@ import {
   GetEntityAncestorsResponse,
   GetEntityFacetsRequest,
   GetEntityFacetsResponse,
+  GetLocationsResponse,
   Location,
   QueryEntitiesRequest,
   QueryEntitiesResponse,
@@ -43,6 +44,10 @@ import {
 } from './types/api';
 import { isQueryEntitiesInitialRequest, splitRefsIntoChunks } from './utils';
 import { DefaultApiClient, TypedResponse } from './schema/openapi';
+import type {
+  AnalyzeLocationRequest,
+  AnalyzeLocationResponse,
+} from '@backstage/plugin-catalog-common';
 
 /**
  * A frontend and backend compatible client for communicating with the Backstage
@@ -73,6 +78,21 @@ export class CatalogClient implements CatalogApi {
         options,
       ),
     );
+  }
+
+  /**
+   * {@inheritdoc CatalogApi.getLocations}
+   */
+  async getLocations(
+    request?: {},
+    options?: CatalogRequestOptions,
+  ): Promise<GetLocationsResponse> {
+    const res = await this.requestRequired(
+      await this.apiClient.getLocations(request ?? {}, options),
+    );
+    return {
+      items: res.map(item => item.data),
+    };
   }
 
   /**
@@ -289,7 +309,7 @@ export class CatalogClient implements CatalogApi {
     );
 
     if (response.status !== 200) {
-      throw new Error(await response.text());
+      throw await ResponseError.fromResponse(response);
     }
   }
 
@@ -329,7 +349,7 @@ export class CatalogClient implements CatalogApi {
     );
 
     if (response.status !== 201) {
-      throw new Error(await response.text());
+      throw await ResponseError.fromResponse(response);
     }
 
     const { location, entities, exists } = await response.json();
@@ -413,6 +433,27 @@ export class CatalogClient implements CatalogApi {
       valid: false,
       errors,
     };
+  }
+
+  /**
+   * {@inheritdoc CatalogApi.analyzeLocation}
+   */
+  async analyzeLocation(
+    request: AnalyzeLocationRequest,
+    options?: CatalogRequestOptions,
+  ): Promise<AnalyzeLocationResponse> {
+    const response = await this.apiClient.analyzeLocation(
+      {
+        body: request,
+      },
+      options,
+    );
+
+    if (response.status !== 200) {
+      throw await ResponseError.fromResponse(response);
+    }
+
+    return response.json() as Promise<AnalyzeLocationResponse>;
   }
 
   //

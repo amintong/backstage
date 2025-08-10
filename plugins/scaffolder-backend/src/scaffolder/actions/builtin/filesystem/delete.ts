@@ -26,24 +26,16 @@ import { examples } from './delete.examples';
  * @public
  */
 export const createFilesystemDeleteAction = () => {
-  return createTemplateAction<{ files: string[] }>({
+  return createTemplateAction({
     id: 'fs:delete',
     description: 'Deletes files and directories from the workspace',
     examples,
     schema: {
       input: {
-        required: ['files'],
-        type: 'object',
-        properties: {
-          files: {
-            title: 'Files',
+        files: z =>
+          z.array(z.string(), {
             description: 'A list of files and directories that will be deleted',
-            type: 'array',
-            items: {
-              type: 'string',
-            },
-          },
-        },
+          }),
       },
     },
     supportsDryRun: true,
@@ -53,10 +45,15 @@ export const createFilesystemDeleteAction = () => {
       }
 
       for (const file of ctx.input.files) {
-        const safeFilepath = resolveSafeChildPath(ctx.workspacePath, file);
+        // globby cannot handle backslash file separators
+        const safeFilepath = resolveSafeChildPath(
+          ctx.workspacePath,
+          file,
+        ).replace(/\\/g, '/');
         const resolvedPaths = await globby(safeFilepath, {
           cwd: ctx.workspacePath,
           absolute: true,
+          dot: true,
         });
 
         for (const filepath of resolvedPaths) {

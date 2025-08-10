@@ -14,20 +14,13 @@
  * limitations under the License.
  */
 import { RouteRef } from '@backstage/frontend-plugin-api';
-import { FrontendModule, FrontendPlugin } from '@backstage/frontend-plugin-api';
 import { BackstageRouteObject } from '../routing/types';
-
-/** @public  */
-export type FrontendFeature =
-  | FrontendPlugin
-  | FrontendModule
-  // TODO(blam): This is just forwards backwards compatibility, remove after v1.31.0
-  | { $$type: '@backstage/ExtensionOverrides' }
-  | { $$type: '@backstage/BackstagePlugin' };
+import { RouteAliasResolver } from '../routing/RouteAliasResolver';
 
 /** @internal */
 export type RouteInfo = {
   routePaths: Map<RouteRef, string>;
   routeParents: Map<RouteRef, RouteRef | undefined>;
   routeObjects: BackstageRouteObject[];
+  routeAliasResolver: RouteAliasResolver;
 };

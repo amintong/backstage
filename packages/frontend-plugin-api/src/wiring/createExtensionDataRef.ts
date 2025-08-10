@@ -23,9 +23,9 @@ export type ExtensionDataValue<TData, TId extends string> = {
 
 /** @public */
 export type ExtensionDataRef<
-  TData,
+  TData = unknown,
   TId extends string = string,
-  TConfig extends { optional?: true } = {},
+  TConfig extends { optional?: true } = { optional?: true },
 > = {
   readonly $$type: '@backstage/ExtensionDataRef';
   readonly id: TId;
@@ -39,12 +39,11 @@ export type ExtensionDataRefToValue<TDataRef extends AnyExtensionDataRef> =
     ? ExtensionDataValue<IData, IId>
     : never;
 
-/** @public */
-export type AnyExtensionDataRef = ExtensionDataRef<
-  unknown,
-  string,
-  { optional?: true }
->;
+/**
+ * @deprecated Use `ExtensionDataRef` without type parameters instead.
+ * @public
+ */
+export type AnyExtensionDataRef = ExtensionDataRef;
 
 /** @public */
 export interface ConfigurableExtensionDataRef<
@@ -60,26 +59,12 @@ export interface ConfigurableExtensionDataRef<
   (t: TData): ExtensionDataValue<TData, TId>;
 }
 
-/**
- * @public
- * @deprecated Use the following form instead: `createExtensionDataRef<Type>().with({ id: 'core.foo' })`
- */
-export function createExtensionDataRef<TData>(
-  id: string,
-): ConfigurableExtensionDataRef<TData, string>;
 /** @public */
 export function createExtensionDataRef<TData>(): {
   with<TId extends string>(options: {
     id: TId;
   }): ConfigurableExtensionDataRef<TData, TId>;
-};
-export function createExtensionDataRef<TData>(id?: string):
-  | ConfigurableExtensionDataRef<TData, string>
-  | {
-      with<TId extends string>(options: {
-        id: TId;
-      }): ConfigurableExtensionDataRef<TData, TId>;
-    } {
+} {
   const createRef = <TId extends string>(refId: TId) =>
     Object.assign(
       (value: TData): ExtensionDataValue<TData, TId> => ({
@@ -103,9 +88,6 @@ export function createExtensionDataRef<TData>(id?: string):
         },
       } as ConfigurableExtensionDataRef<TData, TId, { optional?: true }>,
     );
-  if (id) {
-    return createRef(id);
-  }
   return {
     with<TId extends string>(options: { id: TId }) {
       return createRef(options.id);

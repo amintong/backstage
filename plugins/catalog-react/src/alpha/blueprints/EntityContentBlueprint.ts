@@ -27,6 +27,10 @@ import {
   entityContentGroupDataRef,
   defaultEntityContentGroups,
 } from './extensionData';
+import { EntityPredicate } from '../predicates/types';
+import { resolveEntityFilterData } from './resolveEntityFilterData';
+import { createEntityPredicateSchema } from '../predicates/createEntityPredicateSchema';
+import { Entity } from '@backstage/catalog-model';
 
 /**
  * @alpha
@@ -54,51 +58,51 @@ export const EntityContentBlueprint = createExtensionBlueprint({
     schema: {
       path: z => z.string().optional(),
       title: z => z.string().optional(),
-      filter: z => z.string().optional(),
+      filter: z =>
+        z.union([z.string(), createEntityPredicateSchema(z)]).optional(),
       group: z => z.literal(false).or(z.string()).optional(),
     },
   },
   *factory(
-    {
-      loader,
-      defaultPath,
-      defaultTitle,
-      defaultGroup,
-      filter,
-      routeRef,
-    }: {
+    params: {
+      /**
+       * @deprecated Use the `path` param instead.
+       */
+      defaultPath?: [Error: `Use the 'path' param instead`];
+      path: string;
+      /**
+       * @deprecated Use the `path` param instead.
+       */
+      defaultTitle?: [Error: `Use the 'title' param instead`];
+      title: string;
+      /**
+       * @deprecated Use the `path` param instead.
+       */
+      defaultGroup?: [Error: `Use the 'group' param instead`];
+      group?: keyof typeof defaultEntityContentGroups | (string & {});
       loader: () => Promise<JSX.Element>;
-      defaultPath: string;
-      defaultTitle: string;
-      defaultGroup?: keyof typeof defaultEntityContentGroups | (string & {});
       routeRef?: RouteRef;
-      filter?:
-        | typeof entityFilterFunctionDataRef.T
-        | typeof entityFilterExpressionDataRef.T;
+      filter?: string | EntityPredicate | ((entity: Entity) => boolean);
     },
     { node, config },
   ) {
-    const path = config.path ?? defaultPath;
-    const title = config.title ?? defaultTitle;
-    const group = config.group ?? defaultGroup;
+    const path = config.path ?? params.path;
+    const title = config.title ?? params.title;
+    const group = config.group ?? params.group;
 
-    yield coreExtensionData.reactElement(ExtensionBoundary.lazy(node, loader));
+    yield coreExtensionData.reactElement(
+      ExtensionBoundary.lazy(node, params.loader),
+    );
 
     yield coreExtensionData.routePath(path);
 
     yield entityContentTitleDataRef(title);
 
-    if (routeRef) {
-      yield coreExtensionData.routeRef(routeRef);
+    if (params.routeRef) {
+      yield coreExtensionData.routeRef(params.routeRef);
     }
 
-    if (config.filter) {
-      yield entityFilterExpressionDataRef(config.filter);
-    } else if (typeof filter === 'string') {
-      yield entityFilterExpressionDataRef(filter);
-    } else if (typeof filter === 'function') {
-      yield entityFilterFunctionDataRef(filter);
-    }
+    yield* resolveEntityFilterData(params.filter, config, node);
 
     if (group) {
       yield entityContentGroupDataRef(group);

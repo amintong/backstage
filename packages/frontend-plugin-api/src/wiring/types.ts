@@ -14,8 +14,11 @@
  * limitations under the License.
  */
 
-import { ExternalRouteRef, RouteRef, SubRouteRef } from '../routing';
+import { JsonObject } from '@backstage/types';
 import { ExtensionDefinition } from './createExtension';
+import { ExtensionDataRef, ExtensionDataValue } from './createExtensionDataRef';
+import { ApiHolder, AppNode } from '../apis';
+import { FrontendModule } from './createFrontendModule';
 import { FrontendPlugin } from './createFrontendPlugin';
 
 /**
@@ -29,12 +32,6 @@ export type FeatureFlagConfig = {
 };
 
 /** @public */
-export type AnyRoutes = { [name in string]: RouteRef | SubRouteRef };
-
-/** @public */
-export type AnyExternalRoutes = { [name in string]: ExternalRouteRef };
-
-/** @public */
 export type ExtensionMap<
   TExtensionMap extends { [id in string]: ExtensionDefinition },
 > = {
@@ -42,12 +39,38 @@ export type ExtensionMap<
 };
 
 /** @public */
-export interface ExtensionOverrides {
-  readonly $$type: '@backstage/ExtensionOverrides';
-}
+export type ExtensionDataContainer<UExtensionData extends ExtensionDataRef> =
+  Iterable<
+    UExtensionData extends ExtensionDataRef<
+      infer IData,
+      infer IId,
+      infer IConfig
+    >
+      ? IConfig['optional'] extends true
+        ? never
+        : ExtensionDataValue<IData, IId>
+      : never
+  > & {
+    get<TId extends UExtensionData['id']>(
+      ref: ExtensionDataRef<any, TId, any>,
+    ): UExtensionData extends ExtensionDataRef<infer IData, TId, infer IConfig>
+      ? IConfig['optional'] extends true
+        ? IData | undefined
+        : IData
+      : never;
+  };
 
-/**
- * @public
- * @deprecated import from {@link @backstage/frontend-app-api#FrontendFeature} instead
- */
-export type FrontendFeature = FrontendPlugin | ExtensionOverrides;
+/** @public */
+export type ExtensionFactoryMiddleware = (
+  originalFactory: (contextOverrides?: {
+    config?: JsonObject;
+  }) => ExtensionDataContainer<ExtensionDataRef>,
+  context: {
+    node: AppNode;
+    apis: ApiHolder;
+    config?: JsonObject;
+  },
+) => Iterable<ExtensionDataValue<any, any>>;
+
+/** @public  */
+export type FrontendFeature = FrontendPlugin | FrontendModule;

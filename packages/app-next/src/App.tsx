@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import React from 'react';
 import { createApp } from '@backstage/frontend-defaults';
 import { pagesPlugin } from './examples/pagesPlugin';
 import notFoundErrorPage from './examples/notFoundErrorPageExtension';
@@ -44,7 +43,8 @@ import kubernetesPlugin from '@backstage/plugin-kubernetes/alpha';
 import { convertLegacyPlugin } from '@backstage/core-compat-api';
 import { convertLegacyPageExtension } from '@backstage/core-compat-api';
 import { convertLegacyEntityContentExtension } from '@backstage/plugin-catalog-react/alpha';
-import { customEntityContentOverviewLayoutModule } from './EntityPages';
+import { pluginInfoResolver } from './pluginInfoResolver';
+import { appModuleNav } from './modules/appModuleNav';
 
 /*
 
@@ -85,10 +85,10 @@ const convertedTechdocsPlugin = convertLegacyPlugin(techdocsPlugin, {
     // TODO: We likely also need a way to convert an entire <Route> tree similar to collectLegacyRoutes
     convertLegacyPageExtension(TechDocsIndexPage, {
       name: 'index',
-      defaultPath: '/docs',
+      path: '/docs',
     }),
     convertLegacyPageExtension(TechDocsReaderPage, {
-      defaultPath: '/docs/:namespace/:kind/:name/*',
+      path: '/docs/:namespace/:kind/:name/*',
     }),
     convertLegacyEntityContentExtension(EntityTechdocsContent),
   ],
@@ -131,10 +131,13 @@ const app = createApp({
     appVisualizerPlugin,
     kubernetesPlugin,
     notFoundErrorPageModule,
+    appModuleNav,
     customHomePageModule,
-    customEntityContentOverviewLayoutModule,
     ...collectedLegacyPlugins,
   ],
+  advanced: {
+    pluginInfoResolver,
+  },
   /* Handled through config instead */
   // bindRoutes({ bind }) {
   //   bind(pagesPlugin.externalRoutes, { pageX: pagesPlugin.routes.pageX });

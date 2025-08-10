@@ -27,12 +27,17 @@ import {
   GetEntityAncestorsResponse,
   GetEntityFacetsRequest,
   GetEntityFacetsResponse,
+  GetLocationsResponse,
   Location,
   QueryEntitiesRequest,
   QueryEntitiesResponse,
   ValidateEntityResponse,
 } from '@backstage/catalog-client';
 import { CompoundEntityRef, Entity } from '@backstage/catalog-model';
+import {
+  AnalyzeLocationRequest,
+  AnalyzeLocationResponse,
+} from '@backstage/plugin-catalog-common';
 import {
   CatalogService,
   CatalogServiceRequestOptions,
@@ -90,6 +95,11 @@ export interface CatalogServiceMock extends CatalogService, CatalogApi {
     options?: CatalogServiceRequestOptions | CatalogRequestOptions,
   ): Promise<GetEntityFacetsResponse>;
 
+  getLocations(
+    request?: {},
+    options?: CatalogServiceRequestOptions | CatalogRequestOptions,
+  ): Promise<GetLocationsResponse>;
+
   getLocationById(
     id: string,
     options?: CatalogServiceRequestOptions | CatalogRequestOptions,
@@ -120,4 +130,9 @@ export interface CatalogServiceMock extends CatalogService, CatalogApi {
     locationRef: string,
     options?: CatalogServiceRequestOptions | CatalogRequestOptions,
   ): Promise<ValidateEntityResponse>;
+
+  analyzeLocation(
+    location: AnalyzeLocationRequest,
+    options?: CatalogServiceRequestOptions | CatalogRequestOptions,
+  ): Promise<AnalyzeLocationResponse>;
 }

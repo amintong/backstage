@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Extension } from '@backstage/frontend-plugin-api';
+import { Extension, FrontendFeature } from '@backstage/frontend-plugin-api';
 import { ExtensionParameters } from './readAppExtensionsConfig';
 import { AppNodeSpec } from '@backstage/frontend-plugin-api';
 import { OpaqueFrontendPlugin } from '@internal/frontend';
@@ -25,7 +25,6 @@ import {
 } from '../../../frontend-plugin-api/src/wiring/createFrontendModule';
 // eslint-disable-next-line @backstage/no-relative-monorepo-imports
 import { toInternalExtension } from '../../../frontend-plugin-api/src/wiring/resolveExtensionDefinition';
-import { FrontendFeature } from '../wiring';
 
 /** @internal */
 export function resolveAppNodeSpecs(options: {
@@ -33,34 +32,36 @@ export function resolveAppNodeSpecs(options: {
   builtinExtensions?: Extension<any, any>[];
   parameters?: Array<ExtensionParameters>;
   forbidden?: Set<string>;
+  allowUnknownExtensionConfig?: boolean;
 }): AppNodeSpec[] {
   const {
     builtinExtensions = [],
     parameters = [],
     forbidden = new Set(),
     features = [],
+    allowUnknownExtensionConfig = false,
   } = options;
 
   const plugins = features.filter(OpaqueFrontendPlugin.isType);
   const modules = features.filter(isInternalFrontendModule);
 
-  const pluginExtensions = plugins.flatMap(source => {
-    return OpaqueFrontendPlugin.toInternal(source).extensions.map(
+  const pluginExtensions = plugins.flatMap(plugin => {
+    return OpaqueFrontendPlugin.toInternal(plugin).extensions.map(
       extension => ({
         ...extension,
-        source,
+        plugin,
       }),
     );
   });
   const moduleExtensions = modules.flatMap(mod =>
     toInternalFrontendModule(mod).extensions.flatMap(extension => {
       // Modules for plugins that are not installed are ignored
-      const source = plugins.find(p => p.id === mod.pluginId);
-      if (!source) {
+      const plugin = plugins.find(p => p.id === mod.pluginId);
+      if (!plugin) {
         return [];
       }
 
-      return [{ ...extension, source }];
+      return [{ ...extension, plugin }];
     }),
   );
 
@@ -68,7 +69,7 @@ export function resolveAppNodeSpecs(options: {
   if (pluginExtensions.some(({ id }) => forbidden.has(id))) {
     const pluginsStr = pluginExtensions
       .filter(({ id }) => forbidden.has(id))
-      .map(({ source }) => `'${source.id}'`)
+      .map(({ plugin }) => `'${plugin.id}'`)
       .join(', ');
     const forbiddenStr = [...forbidden].map(id => `'${id}'`).join(', ');
     throw new Error(
@@ -78,7 +79,7 @@ export function resolveAppNodeSpecs(options: {
   if (moduleExtensions.some(({ id }) => forbidden.has(id))) {
     const pluginsStr = moduleExtensions
       .filter(({ id }) => forbidden.has(id))
-      .map(({ source }) => `'${source.id}'`)
+      .map(({ plugin }) => `'${plugin.id}'`)
       .join(', ');
     const forbiddenStr = [...forbidden].map(id => `'${id}'`).join(', ');
     throw new Error(
@@ -87,12 +88,13 @@ export function resolveAppNodeSpecs(options: {
   }
 
   const configuredExtensions = [
-    ...pluginExtensions.map(({ source, ...extension }) => {
+    ...pluginExtensions.map(({ plugin, ...extension }) => {
       const internalExtension = toInternalExtension(extension);
       return {
         extension: internalExtension,
         params: {
-          source,
+          plugin,
+          source: plugin,
           attachTo: internalExtension.attachTo,
           disabled: internalExtension.disabled,
           config: undefined as unknown,
@@ -105,6 +107,7 @@ export function resolveAppNodeSpecs(options: {
         extension: internalExtension,
         params: {
           source: undefined,
+          plugin: undefined,
           attachTo: internalExtension.attachTo,
           disabled: internalExtension.disabled,
           config: undefined as unknown,
@@ -131,7 +134,8 @@ export function resolveAppNodeSpecs(options: {
       configuredExtensions.push({
         extension: internalExtension,
         params: {
-          source: extension.source,
+          plugin: extension.plugin,
+          source: extension.plugin,
           attachTo: internalExtension.attachTo,
           disabled: internalExtension.disabled,
           config: undefined,
@@ -202,7 +206,7 @@ export function resolveAppNodeSpecs(options: {
         existing.params.disabled = Boolean(overrideParam.disabled);
       }
       order.set(extensionId, existing);
-    } else {
+    } else if (!allowUnknownExtensionConfig) {
       throw new Error(`Extension ${extensionId} does not exist`);
     }
   }
@@ -217,6 +221,7 @@ export function resolveAppNodeSpecs(options: {
     attachTo: param.params.attachTo,
     extension: param.extension,
     disabled: param.params.disabled,
+    plugin: param.params.plugin,
     source: param.params.source,
     config: param.params.config,
   }));

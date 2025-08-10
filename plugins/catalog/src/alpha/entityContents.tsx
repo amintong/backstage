@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import React, { lazy as reactLazy } from 'react';
+import { lazy as reactLazy } from 'react';
 import {
   coreExtensionData,
   createExtensionInput,
@@ -47,12 +47,13 @@ export const catalogOverviewEntityContent =
     },
     factory: (originalFactory, { node, inputs }) => {
       return originalFactory({
-        defaultPath: '/',
-        defaultTitle: 'Overview',
+        path: '/',
+        title: 'Overview',
+        group: 'overview',
         loader: async () => {
           const LazyDefaultLayoutComponent = reactLazy(() =>
-            import('./EntityOverviewPage').then(m => ({
-              default: m.EntityOverviewPage,
+            import('./DefaultEntityContentLayout').then(m => ({
+              default: m.DefaultEntityContentLayout,
             })),
           );
 
